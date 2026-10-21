@@ -29,14 +29,32 @@ function readingText(p){
 function text(p,i){return `<article class="text-page" lang="${state.lang}"><p class="chapter-no">${String(i+1).padStart(2,'0')}</p><span class="chapter-kicker">${esc(book.id.toUpperCase())} · ${esc(p.id.replaceAll('-',' ').toUpperCase())}</span><h2>${p.title[state.lang]}</h2><div class="story-text">${readingText(p)}</div><span class="folio">${i+1}</span></article>`}
 function leafIndex(page){return page<0?0:state.mobile?page+1:page*2+1}
 function narrative(index){if(index===0)return -1;return state.mobile?index-1:Math.floor((index-1)/2)}
+function paperHeight(el,width,baseline){
+ // Measure natural text before StPageFlip hides the leaves. Preserve font size
+ // and give the longest chapter enough paper, including its folio and margins.
+ const probe=document.createElement('div');
+ probe.className=state.mobile?'mobile-leaf':'book-page';
+ probe.style.cssText=`position:fixed;left:-10000px;top:0;width:${width-2}px;height:auto;visibility:hidden;pointer-events:none`;
+ document.body.append(probe);let tallest=0;
+ for(const article of el.querySelectorAll('.text-page')){
+  const copy=article.cloneNode(true);copy.style.height='auto';copy.style.flex='none';
+  probe.replaceChildren(copy);tallest=Math.max(tallest,copy.getBoundingClientRect().height);
+ }
+ probe.remove();
+ if(state.mobile&&book.mobileImageRatio)return Math.max(baseline,Math.ceil(tallest+18+(width-2)/book.mobileImageRatio)+2);
+ const textFraction=state.mobile?(innerWidth<=360?.69:.63):1;
+ return Math.max(baseline,Math.ceil((tallest+18)/textFraction)+2);
+}
 function setupBook(target=-1){
  lastViewportWidth=innerWidth;
  if(flip){flip.destroy();const n=document.createElement('div');n.id='flipbook';$('.book-rest').replaceChildren(n)}
  const el=$('#flipbook');
- el.innerHTML=cover()+book.pages.map((p,i)=>state.mobile?`<div class="book-page"><div class="mobile-leaf">${art(p)}${text(p,i)}</div></div>`:`<div class="book-page">${art(p)}</div><div class="book-page">${text(p,i)}</div>`).join('')+`<div class="book-page" data-density="hard"><div class="end-leaf"><div><span class="chapter-kicker">THE END</span><h2>${t('그리고, 새로운 내일.','A new tomorrow.')}</h2><p>${t(esc(book.title.ko)+'의 이야기를 끝까지 읽었어요.<br>서재로 돌아가거나, 다시 펼쳐 보세요.','You have reached the end of '+esc(book.title.en)+'.<br>Return to the library, or read it again.')}</p></div></div></div>`;
+ el.innerHTML=cover()+book.pages.map((p,i)=>state.mobile?`<div class="book-page"><div class="mobile-leaf ${book.mobileImageRatio?'full-scene':''}">${art(p)}${text(p,i)}</div></div>`:`<div class="book-page">${art(p)}</div><div class="book-page">${text(p,i)}</div>`).join('')+`<div class="book-page" data-density="hard"><div class="end-leaf"><div><span class="chapter-kicker">THE END</span><h2>${t('그리고, 새로운 내일.','A new tomorrow.')}</h2><p>${t(esc(book.title.ko)+'의 이야기를 끝까지 읽었어요.<br>서재로 돌아가거나, 다시 펼쳐 보세요.','You have reached the end of '+esc(book.title.en)+'.<br>Return to the library, or read it again.')}</p></div></div></div>`;
  const available=document.documentElement.clientWidth;
  const w=state.mobile?Math.min(available-24,520):Math.min(535,(available-70)/2);
- const h=state.mobile?Math.max(860,w*1.95):Math.max(620,Math.round(w*1.16));
+ if(state.mobile&&book.mobileImageRatio)el.style.setProperty('--scene-height',`${(w-2)/book.mobileImageRatio}px`);
+ const baseline=state.mobile?Math.max(860,w*1.95):Math.max(620,Math.round(w*1.16));
+ const h=paperHeight(el,w,baseline);
  $('.book-rest').style.width=`${state.mobile?w:w*2}px`;
  $('.book-rest').style.height=`${h}px`;
  flip=new St.PageFlip(el,{width:w,height:h,size:'fixed',showCover:true,usePortrait:true,startPage:leafIndex(target),drawShadow:true,maxShadowOpacity:.38,flippingTime:state.motion?80:950,mobileScrollSupport:true,swipeDistance:35,clickEventForward:true,useMouseEvents:!state.mobile,showPageCorners:!state.motion,disableFlipByClick:false});
