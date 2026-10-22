@@ -159,3 +159,10 @@ body[data-theme=night].reading{--ink:#e6e1cc;--paper:#27382f;background:#18271f}
 .transport small{white-space:nowrap}
 
 .transport small{white-space:nowrap}
+
+/* Smooth page turns: fixed book shadow, isolated paper, stationary scene effects while turning. */
+.book-rest{filter:none!important;box-shadow:0 8px 18px #58462a25}
+.book-page{contain:layout paint}
+.turning-page .art span{animation-play-state:paused!important}
+.turning-page .art-base,.turning-page .art-foreground{transition:none!important}
+.turning-page .book-page{will-change:transform}

@@ -28,3 +28,8 @@ See [sources and licenses](SOURCES.md). Raw voice references, private transcript
 첫 재생은 사용자가 눌러야 합니다. 설정 창은 Esc로 닫습니다. 속도를 변경해도 하이라이트는 원래 음원의 재생 위치에 맞춥니다. 언어·해설·장을 변경하면 이전 음원을 정지합니다. 취침 타이머는 새로고침/서재로 돌아갈 때 해제됩니다. 탭이 숨겨지면 낭독은 일시정지합니다. 기기 저장소가 제한되면 현재 세션의 읽기는 계속 가능하지만 이어 읽기 저장은 유지되지 않을 수 있습니다.
 
 참고: [Apple Books 플레이어](https://support.apple.com/en-gb/guide/iphone/iphac1971248/ios), [Google 읽기 모드](https://support.google.com/accessibility/android/answer/13026948?hl=en), [W3C 터치 대상 크기](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html). 기존 그림·대본·음원은 변경하지 않았습니다.
+
+
+## 부드러운 페이지 이동 · 2026-10-22
+
+목차 이동 때 책을 재사용하고, 언어·화면 전환으로 폐기한 책의 렌더링 및 이벤트를 정리했습니다. 읽는 동안에는 책 엔진이 다시 그리지 않고, 페이지가 움직일 때만 갱신합니다. 가속·감속을 적용하고 움직이는 책 전체에 걸리던 그림자 필터를 고정 그림자로 바꿨습니다. 세로 화면의 이전 장 버튼 좌표도 바로잡았습니다.

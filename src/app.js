@@ -18,7 +18,7 @@ let resumeTime=null,sleepTimer=null,sleepDeadline=null,sleepMode='off',saveStamp
 function savePrefs(){store('readerPrefs',{rate:state.rate,font:state.font,follow:state.follow,theme:state.theme,motion:state.motion})}
 function savePosition(){if(state.reader&&state.page>=0&&state.page<book.pages.length)store('position.'+book.id,{page:state.page,time:audio.ended?0:audio.currentTime,lang:state.lang,voice:state.voice,updated:Date.now()})}
 function applyPrefs(){document.documentElement.style.setProperty('--reading-size',state.font+'px');document.body.dataset.theme=state.theme;$('#speed').value=state.rate;$('#theme').value=state.theme;$('#font-value').value=state.font;$('#font-down').disabled=state.font<=16;$('#font-up').disabled=state.font>=24;$('#follow').setAttribute('aria-checked',String(state.follow));audio.playbackRate=state.rate;audio.preservesPitch=true;}
-let flip,resizeTimer,noticeTimer,autoTimer,pendingAuto,highlightFrame,currentCues=[],activeLine='',activeWord='',lastViewportWidth=innerWidth,openingEpoch=0;
+let flip,resizeTimer,noticeTimer,autoTimer,pendingAuto,highlightFrame,currentCues=[],activeLine='',activeWord='',lastViewportWidth=innerWidth,lastViewportHeight=innerHeight,openingEpoch=0;
 const t=(ko,en)=>state.lang==='ko'?ko:en;
 const esc=s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function renderShelf(){
@@ -45,8 +45,8 @@ function narrative(index){if(index===0)return -1;return state.mobile?index-1:Mat
 function setupBook(target=-1){
  // Language changes may rebuild before the debounced resize handler runs.
  state.mobile=innerWidth<=1100;
- lastViewportWidth=innerWidth;
- if(flip){flip.destroy();const n=document.createElement('div');n.id='flipbook';$('.book-rest').replaceChildren(n)}
+ lastViewportWidth=innerWidth;lastViewportHeight=innerHeight;
+ destroyBook();document.body.classList.remove('turning-page');
  const el=$('#flipbook');
  el.innerHTML=cover()+book.pages.map((p,i)=>state.mobile?`<div class="book-page"><div class="mobile-leaf ${book.mobileImageRatio?'full-scene':''}">${art(p)}${text(p,i)}</div></div>`:`<div class="book-page">${art(p)}</div><div class="book-page">${text(p,i)}</div>`).join('')+`<div class="book-page" data-density="hard"><div class="end-leaf"><div><span class="chapter-kicker">THE END</span><h2>${t('그리고, 새로운 내일.','A new tomorrow.')}</h2><p>${t(esc(book.title.ko)+'의 이야기를 끝까지 읽었어요.<br>서재로 돌아가거나, 다시 펼쳐 보세요.','You have reached the end of '+esc(book.title.en)+'.<br>Return to the library, or read it again.')}</p></div></div></div>`;
  const available=$('.reading-desk').clientWidth;
@@ -54,11 +54,28 @@ function setupBook(target=-1){
  const h=Math.max(180,Math.floor($('.reading-desk').clientHeight-16));
  $('.book-rest').style.width=`${state.mobile?w:w*2}px`;
  $('.book-rest').style.height=`${h}px`;
- flip=new St.PageFlip(el,{width:w,height:h,size:'fixed',showCover:true,usePortrait:true,startPage:leafIndex(target),drawShadow:true,maxShadowOpacity:.38,flippingTime:state.motion?80:600,mobileScrollSupport:false,swipeDistance:35,clickEventForward:true,useMouseEvents:!state.mobile,showPageCorners:!state.mobile&&!state.motion,disableFlipByClick:true});
- const thisFlip=flip;flip.on('flip',e=>{if(thisFlip!==flip||!state.reader)return;const n=narrative(e.data);if(n!==state.page){stopAudio();state.page=n;syncAudio()}updateControls();queueMicrotask(continueAuto)});
- flip.on('changeState',e=>{if(thisFlip!==flip||!state.reader)return;if(e.data==='flipping')stopAudio();if(e.data==='read')queueMicrotask(continueAuto)});
+ flip=new St.PageFlip(el,{width:w,height:h,size:'fixed',showCover:true,usePortrait:true,startPage:leafIndex(target),drawShadow:true,maxShadowOpacity:.38,flippingTime:state.motion?80:700,mobileScrollSupport:false,swipeDistance:35,clickEventForward:true,useMouseEvents:!state.mobile,showPageCorners:!state.mobile&&!state.motion,disableFlipByClick:true});
+ const thisFlip=flip;flip.on('flip',e=>{if(thisFlip!==flip||!state.reader)return;const n=narrative(e.data);if(n!==state.page){stopAudio();state.page=n;syncAudio()}updateControls();warmPages();queueMicrotask(continueAuto)});
+ flip.on('changeState',e=>{if(thisFlip!==flip||!state.reader)return;if(e.data==='flipping'){document.body.classList.add('turning-page');window.readerPerf?.start();stopAudio()}if(e.data==='read'){document.body.classList.remove('turning-page');window.readerPerf?.end();queueMicrotask(continueAuto)}});
  flip.loadFromHTML(el.querySelectorAll('.book-page'));
  state.page=target;updateControls();syncAudio();
+}
+// Reuse the current book for chapter jumps; rebuilding is reserved for layout/language.
+function jumpTo(target){
+ openingEpoch++;state.opening=false;cancelAuto();stopAudio();
+ flip.getRender().finishAnimation();flip.turnToPage(leafIndex(target));
+ document.body.classList.remove('turning-page');
+ if(state.page!==target){state.page=target;syncAudio();updateControls()}
+}
+function destroyBook(){
+ if(!flip)return;const old=flip;flip=null;old.destroy();
+ const el=document.createElement('div');el.id='flipbook';$('.book-rest').replaceChildren(el);
+ document.body.classList.remove('turning-page');window.readerPerf?.end();
+}
+function warmPages(){
+ for(const i of [state.page-1,state.page,state.page+1]){const p=book.pages[i];if(!p)continue;
+  const img=document.querySelector(`.art-base[src="${p.image}"]`);if(img)img.decode().catch(()=>{});
+ }
 }
 function cancelAuto(){clearTimeout(autoTimer);pendingAuto=null;state.chain++}
 function clearHighlight(){cancelAnimationFrame(highlightFrame);document.querySelectorAll('.read-active').forEach(el=>{el.classList.remove('read-active');el.removeAttribute('aria-current');el.style.removeProperty('--read-progress')});document.querySelectorAll('.word-current').forEach(el=>el.classList.remove('word-current'));activeLine='';activeWord=''}
@@ -124,10 +141,10 @@ async function open(resume=false){
  $('#library').hidden=true;$('#reader').hidden=false;window.scrollTo(0,0);state.reader=true;document.body.classList.add('reading');state.mobile=innerWidth<=1100;setupBook(saved?Math.min(saved.page,book.pages.length-1):-1);
  const openingFlip=flip;await new Promise(r=>setTimeout(r,state.motion?80:450));if(epoch!==openingEpoch)return;if(state.reader&&flip===openingFlip&&state.page===-1)flip.flipNext('bottom');state.opening=false;if(state.reader&&!$('#reader').contains(document.activeElement)){$('#reader').tabIndex=-1;$('#reader').focus({preventScroll:true})}
 }
-function back(){if(!state.reader&&!state.opening)return;savePosition();clearSleep();document.body.classList.remove('reading');openingEpoch++;state.opening=false;cancelAuto();stopAudio();currentCues=[];audio.removeAttribute('src');audio.load();state.reader=false;$('#reader').classList.remove('has-started');$('#reader').hidden=true;$('#library').hidden=false;$('#library').classList.remove('opening');window.scrollTo(0,0);renderResume();$('#open-book').focus({preventScroll:true})}
+function back(){if(!state.reader&&!state.opening)return;savePosition();clearSleep();document.body.classList.remove('reading');openingEpoch++;state.opening=false;cancelAuto();stopAudio();currentCues=[];audio.removeAttribute('src');audio.load();state.reader=false;destroyBook();$('#reader').classList.remove('has-started');$('#reader').hidden=true;$('#library').hidden=false;$('#library').classList.remove('opening');window.scrollTo(0,0);renderResume();$('#open-book').focus({preventScroll:true})}
 $('#open-book').addEventListener('click',()=>open());$('#resume-reading').addEventListener('click',()=>{book=data.books.find(b=>b.id===$('#resume-reading').dataset.book)||book;renderShelf();open(true)});$('#back').addEventListener('click',back);$('#brand').addEventListener('click',e=>{e.preventDefault();back()});
 $('#next').addEventListener('click',()=>turn(1));$('#prev').addEventListener('click',()=>turn(-1));$('#play').addEventListener('click',play);
-$('#chapter').addEventListener('change',e=>{cancelAuto();stopAudio();const target=Number(e.target.value);if(Number.isInteger(target)&&target>=-1&&target<=book.pages.length){setupBook(target);window.scrollTo({top:0,behavior:state.motion?'instant':'smooth'})}});
+$('#chapter').addEventListener('change',e=>{cancelAuto();stopAudio();const target=Number(e.target.value);if(Number.isInteger(target)&&target>=-1&&target<=book.pages.length){jumpTo(target);window.scrollTo({top:0,behavior:state.motion?'instant':'smooth'})}});
 $('#restart').addEventListener('click',()=>{closeSettings();cancelAuto();stopAudio();play()});
 $('#progress').addEventListener('input',e=>{cancelAuto();if(Number.isFinite(audio.duration))audio.currentTime=audio.duration*e.target.value/100;updatePlayer()});
 $('#voice').addEventListener('change',e=>{cancelAuto();stopAudio();state.voice=e.target.value;syncAudio();updateControls()});
@@ -135,13 +152,13 @@ for(const lang of ['ko','en'])$('#lang-'+lang).addEventListener('click',()=>{if(
 $('#auto-next').addEventListener('click',()=>{state.autoAdvance=!state.autoAdvance;if(!state.autoAdvance)cancelAuto();$('#auto-next').setAttribute('aria-checked',String(state.autoAdvance));try{localStorage.setItem('woodland.autoAdvance',String(state.autoAdvance))}catch{}});
 audio.addEventListener('timeupdate',()=>{updatePlayer();if(Date.now()-saveStamp>2000){savePosition();saveStamp=Date.now()}});audio.addEventListener('loadedmetadata',()=>{audio.playbackRate=state.rate;if(resumeTime!==null&&Number.isFinite(audio.duration)){audio.currentTime=Math.min(resumeTime,Math.max(0,audio.duration-.1));resumeTime=null}updatePlayer()});audio.addEventListener('play',()=>{$('#reader').classList.add('has-started');activeLine='';updatePlayer();animateHighlight()});audio.addEventListener('pause',()=>{savePosition();cancelAnimationFrame(highlightFrame);updatePlayer()});audio.addEventListener('seeked',updateHighlight);audio.addEventListener('ended',finishPage);
 document.addEventListener('keydown',e=>{if(document.querySelector('dialog[open]'))return;if(e.key==='Escape'&&state.opening){e.preventDefault();back();return}if(!state.reader||e.altKey||e.ctrlKey||e.metaKey||/INPUT|SELECT|TEXTAREA/.test(e.target.tagName))return;if(e.key==='ArrowRight'){e.preventDefault();turn(1)}if(e.key==='ArrowLeft'){e.preventDefault();turn(-1)}if(e.code==='Space'&&e.target.tagName!=='BUTTON'){e.preventDefault();play()}if(e.key==='Escape'){e.preventDefault();back()}});
-function motion(value){state.motion=value;document.body.classList.toggle('reduce-motion',value);$('#motion').setAttribute('aria-pressed',String(value));$('#reader-motion').setAttribute('aria-checked',String(value));savePrefs();if(flip)flip.getSettings().flippingTime=value?80:600}
+function motion(value){state.motion=value;document.body.classList.toggle('reduce-motion',value);$('#motion').setAttribute('aria-pressed',String(value));$('#reader-motion').setAttribute('aria-checked',String(value));savePrefs();if(flip)flip.getSettings().flippingTime=value?80:700}
 applyPrefs();motion(state.motion);$('#motion').addEventListener('click',()=>motion(!state.motion));
 matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',e=>motion(e.matches));
-window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{if(!state.reader)return;const time=audio.currentTime,playing=!audio.paused;cancelAuto();resumeTime=time;setupBook(state.page);if(playing)play()},200)});
+window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{if(!state.reader||(lastViewportWidth===innerWidth&&lastViewportHeight===innerHeight))return;const time=audio.currentTime,playing=!audio.paused;cancelAuto();resumeTime=time;setupBook(state.page);if(playing)play()},200)});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){savePosition();cancelAuto();stopAudio(false)}});
 window.addEventListener('pagehide',()=>{savePosition();cancelAuto();stopAudio(false)});
-$('.reading-desk').addEventListener('pointermove',e=>{if(state.motion||e.pointerType==='touch')return;const r=e.currentTarget.getBoundingClientRect();document.documentElement.style.setProperty('--px',`${(e.clientX-r.left-r.width/2)/70}px`);document.documentElement.style.setProperty('--py',`${(e.clientY-r.top-r.height/2)/70}px`)});
+$('.reading-desk').addEventListener('pointermove',e=>{if(state.motion||e.pointerType==='touch'||flip?.getState()==='flipping')return;const r=e.currentTarget.getBoundingClientRect();document.documentElement.style.setProperty('--px',`${(e.clientX-r.left-r.width/2)/70}px`);document.documentElement.style.setProperty('--py',`${(e.clientY-r.top-r.height/2)/70}px`)});
 $('.reading-desk').addEventListener('pointerdown',cancelAuto);
 // Mobile illustration swipes invoke the engine's page animation directly.
 // Keep vertical reading scroll native; desktop retains the engine's fold drag.
@@ -178,7 +195,7 @@ for(const [id,delta] of [['font-down',-2],['font-up',2]])$('#'+id).addEventListe
 $('#theme').addEventListener('change',e=>{state.theme=e.target.value;applyPrefs();savePrefs()});
 $('#follow').addEventListener('click',()=>{state.follow=!state.follow;applyPrefs();savePrefs();activeLine='';updateHighlight()});
 $('#reader-motion').addEventListener('click',()=>motion(!state.motion));
-$('#start-over').addEventListener('click',()=>{closeSettings();cancelAuto();stopAudio();setupBook(0);savePosition()});
+$('#start-over').addEventListener('click',()=>{closeSettings();cancelAuto();stopAudio();jumpTo(0);savePosition()});
 function clearSleep(){clearTimeout(sleepTimer);sleepTimer=null;sleepDeadline=null;sleepMode='off';$('#sleep').value='off';$('#sleep-status').hidden=true;}
 $('#sleep').addEventListener('change',e=>{const value=e.target.value;clearSleep();sleepMode=value;$('#sleep').value=value;$('#sleep-status').hidden=value==='off';$('#sleep-status').textContent=value==='chapter'?t('이 장 끝에 쉼','Rest after chapter'):value+' min';if(['15','30'].includes(value)){sleepDeadline=Date.now()+Number(value)*60000;sleepTimer=setTimeout(()=>{cancelAuto();stopAudio(false);clearSleep();notice(t('취침 타이머가 끝났어요','Sleep timer finished'))},Number(value)*60000)}});
 $('#image-open').addEventListener('click',()=>{const p=book.pages[state.page];$('#large-art').src=p?p.image:book.cover;$('#large-art').alt=p?p.alt[state.lang]:book.title[state.lang];$('#large-art-caption').textContent=p?p.title[state.lang]:book.title[state.lang];$('#art-dialog').showModal()});

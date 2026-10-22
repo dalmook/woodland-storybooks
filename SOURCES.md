@@ -19,3 +19,8 @@ The project uses locally generated Qwen3-TTS-12Hz-0.6B-Base audio with separate 
 - [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS), Apache-2.0; the license text is in `vendor/Qwen3-TTS-LICENSE.txt`. Model weights and source reference samples are not distributed with this static site.
 
 The earlier dependency review also considered [react-pageflip](https://github.com/Nodlik/react-pageflip) (MIT, a React wrapper around the same engine) and [turn.js](https://github.com/blasten/turn.js) (jQuery dependency and noncommercial/commercial license distinctions). StPageFlip was selected for the light framework-free implementation and directly tested integration. This does not imply a new upstream release or a maintenance guarantee.
+
+
+## Page transition maintenance · 2026-10-22
+
+The bundled StPageFlip 2.0.7 (MIT, https://github.com/Nodlik/StPageFlip) includes a small local patch: stop/cancel renderer frames on destroy, always remove input/resize listeners, ignore deferred initialization of destroyed instances, schedule draws on demand, use a monotonic animation start clock and sine easing, and locate the previous-page corner relative to the book bounds in portrait mode. Original license notices are retained. Chapter jumps reuse the current book. Static box shadows replace a filter around the animated book; scene animations pause during a turn. No artwork, narration or story text changed.
