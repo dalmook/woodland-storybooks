@@ -46,6 +46,8 @@ function paperHeight(el,width,baseline){
  return Math.max(baseline,Math.ceil((tallest+18)/textFraction)+2);
 }
 function setupBook(target=-1){
+ // Language changes may rebuild before the debounced resize handler runs.
+ state.mobile=innerWidth<=1100;
  lastViewportWidth=innerWidth;
  if(flip){flip.destroy();const n=document.createElement('div');n.id='flipbook';$('.book-rest').replaceChildren(n)}
  const el=$('#flipbook');
