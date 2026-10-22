@@ -1,7 +1,8 @@
 const $=s=>document.querySelector(s);
 const dataURL=new URL('./books.json',import.meta.url);dataURL.search=new URL(import.meta.url).search;
 const data=await fetch(dataURL).then(r=>{if(!r.ok)throw Error('Book data unavailable');return r.json()});
-let book=data.books[0];
+const requestedBook=new URL(location.href).searchParams.get('book');
+let book=data.books.find(b=>b.id===requestedBook)||data.books.find(b=>b.id===data.featuredBook)||data.books[0];
 const voicesForBook=()=>book.voices||data.voices;
 const castForBook=()=>book.cast||data.cast||{};
 const audio=$('#narration');
@@ -22,6 +23,8 @@ let flip,resizeTimer,noticeTimer,autoTimer,pendingAuto,highlightFrame,currentCue
 const t=(ko,en)=>state.lang==='ko'?ko:en;
 const esc=s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function renderShelf(){
+ $('#open-book').dataset.book=book.id;
+ $('#reader').dataset.book=book.id;
  const front=$('.shelf-book .cover-face');front.querySelector('img').src=book.cover;front.querySelector('img').alt=`${book.title.ko} 수채화 표지`;
  front.querySelector('.cover-type').classList.toggle('bottom',book.coverLayout==='bottom');front.querySelector('strong').textContent=book.title.ko;front.querySelector('em').textContent=book.title.en;front.querySelector('.cover-type>span').textContent=book.subtitle.ko;
  $('#open-book').setAttribute('aria-label',`${book.title.ko} 책 펼치기`);$('.feature-note small').textContent=`${book.title.ko} · ${book.subtitle.ko}`;

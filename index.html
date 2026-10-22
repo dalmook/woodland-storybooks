@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="ko">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f3eddf"><title>숲속의 서재</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ctext y='32' font-size='32'%3E📖%3C/text%3E%3C/svg%3E"><link rel="stylesheet" href="./src/style.css?v=3d8d7e414023"><script>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f3eddf"><title>숲속의 서재</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ctext y='32' font-size='32'%3E📖%3C/text%3E%3C/svg%3E"><link rel="stylesheet" href="./src/style.css?v=d66a44e450ff"><script>
 // Opt-in local performance diagnostics. No network telemetry or persistence.
 if(new URLSearchParams(location.search).has('perf')){
  const raf=requestAnimationFrame.bind(window),cancel=cancelAnimationFrame.bind(window),pending=new Set();
@@ -17,24 +17,24 @@ if(new URLSearchParams(location.search).has('perf')){
  add('DOMContentLoaded',()=>{const el=document.createElement('output');el.id='performance-report';el.hidden=true;document.body.append(el);setInterval(()=>{report.pendingRAF=pending.size;report.resizeListeners=resize.size;el.textContent=JSON.stringify(report)},250)});
 }
 </script>
-<script defer src="./vendor/page-flip.browser.js?v=3d8d7e414023"></script><script type="module" src="./src/app.js?v=3d8d7e414023"></script></head>
+<script defer src="./vendor/page-flip.browser.js?v=3d8d7e414023"></script><script type="module" src="./src/app.js?v=d66a44e450ff"></script></head>
 <body>
 <a class="skip" href="#main">본문으로</a>
 <header class="site-header"><a class="brand" href="#" id="brand" aria-label="숲속의 서재 홈"><svg viewBox="0 0 38 38" aria-hidden="true"><path d="M19 31V13M19 13C12 6 5 10 4 10v19c6-3 10-1 15 2 5-3 9-5 15-2V10s-9-4-15 3ZM19 13c-2-6 0-10 4-11 0 5-1 8-4 11Z"/></svg><span>숲속의 서재<small>THE WOODLAND LIBRARY</small></span></a><span class="header-note">한 장의 종이에서 시작되는, 작은 모험</span><button id="motion" data-ko="움직임 줄이기" data-en="Reduce motion" class="quiet-button" aria-pressed="false">움직임 줄이기</button></header>
 <main id="main">
 <section id="library" aria-labelledby="library-title">
- <div class="library-intro"><p class="eyebrow"><span></span> A LITTLE WONDER, EVERY DAY</p><h1 id="library-title">이야기가<br><em>깨어나는</em> 시간.</h1><p class="intro-copy">햇살이 머무는 작은 서재.<br>책 한 권을 펼치면, 당신만의 숲이 시작됩니다.</p><div class="intro-line"></div><p class="small-note">읽고, 듣고, 상상하는 동화책</p><div class="feature-note"><span>01</span><p>오늘의 이야기<small>라푼젤 · 창문 너머의 세상</small></p></div></div>
+ <div class="library-intro"><p class="eyebrow"><span></span> A LITTLE WONDER, EVERY DAY</p><h1 id="library-title">이야기가<br><em>깨어나는</em> 시간.</h1><p class="intro-copy">햇살이 머무는 작은 서재.<br>책 한 권을 펼치면, 당신만의 숲이 시작됩니다.</p><div class="intro-line"></div><p class="small-note">읽고, 듣고, 상상하는 동화책</p><div class="feature-note"><span>01</span><p>오늘의 이야기<small>의좋은 형제 · 줄지 않는 볏단의 비밀</small></p></div></div>
  <div class="shelf-scene"><div class="arch-light"></div><div class="window-lines"></div><div class="sunbeam"></div><div class="dust d1"></div><div class="dust d2"></div><div class="dust d3"></div><div class="shelf-back"></div><div class="decor-books left" aria-hidden="true"><i></i><i></i><i></i></div><div class="decor-books right" aria-hidden="true"><i></i><i></i></div><div class="shelf-plant" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b></div>
-  <button class="shelf-book" id="open-book" aria-label="라푼젤 책 펼치기"><span class="book-spine"></span><span class="cover-face"><img src="./assets/books/rapunzel/images/cover.webp" alt="숲과 돌탑, 창가의 라푼젤을 그린 수채화 표지"><span class="cover-type"><small>THE WOODLAND CLASSICS</small><strong>라푼젤</strong><em>Rapunzel</em><span>창문 너머의 세상</span></span><span class="cover-frame"></span></span><span class="book-edge"></span></button>
-  <div class="wood-shelf"></div><div class="shelf-caption"><span>그림 형제의 옛이야기</span><b>책을 눌러 펼쳐 보세요 <span aria-hidden="true">↗</span></b></div>
+  <button class="shelf-book" id="open-book" data-book="kindhearted-brothers" aria-label="의좋은 형제 책 펼치기"><span class="book-spine"></span><span class="cover-face"><img src="./assets/books/kindhearted-brothers/images/cover.webp?v=0ddaed66f17c" alt="달빛 아래 볏단을 지고 마주친 의좋은 형제의 수채화 표지"><span class="cover-type bottom"><small>THE WOODLAND CLASSICS</small><strong>의좋은 형제</strong><em>The Kindhearted Brothers</em><span>줄지 않는 볏단의 비밀</span></span><span class="cover-frame"></span></span><span class="book-edge"></span></button>
+  <div class="wood-shelf"></div><div class="shelf-caption"><span>한국 전래동화 · 새롭게 각색</span><b>책을 눌러 펼쳐 보세요 <span aria-hidden="true">↗</span></b></div>
  </div>
  <button id="resume-reading" hidden></button><div id="extra-books" class="extra-books" hidden aria-label="서재의 다른 책"></div>
  <footer class="library-footer"><span>조금 천천히, 이야기 속으로.</span><span>한국어 & English <b>·</b> 두 해설과 인물 대사 <b>·</b> 오래 머무는 이야기</span></footer>
 </section>
-<section id="reader" hidden aria-label="라푼젤 동화책">
+<section id="reader" hidden aria-label="의좋은 형제 동화책">
  <nav class="reader-toolbar" aria-label="독서 도구">
   <button id="back" class="quiet-button" aria-label="서재로 돌아가기">← <span data-ko="서재" data-en="Library">서재</span></button>
-  <div class="reader-name">라푼젤 <span>RAPUNZEL</span></div>
+  <div class="reader-name">의좋은 형제 <span>THE KINDHEARTED BROTHERS</span></div>
   <button id="settings-open" class="quiet-button" aria-haspopup="dialog" data-ko="읽기 설정" data-en="Settings">읽기 설정</button>
  </nav>
  <div class="chapter-bar"><label><span class="sr-only">목차에서 이동</span><select id="chapter" aria-label="목차에서 이동"></select></label><span id="page-label" aria-live="polite">표지</span></div>
